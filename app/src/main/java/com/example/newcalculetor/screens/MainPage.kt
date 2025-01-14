@@ -22,20 +22,16 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.newcalculetor.calculator.calculate
 import com.example.newcalculetor.ui.theme.NewCalculetorTheme
-import com.example.newcalculetor.ui.theme.black10
-import com.example.newcalculetor.ui.theme.blue10
-import com.example.newcalculetor.ui.theme.white
 
 var equacion by mutableStateOf("")
 var problema = ""
-var result by mutableStateOf(0.0)
+var result by mutableDoubleStateOf(0.0)
 
 @Composable
 fun Buttons(text: String, onClick: () -> Unit, widthFactor: Float) {
@@ -54,7 +50,7 @@ fun Buttons(text: String, onClick: () -> Unit, widthFactor: Float) {
         onClick = { onClick() },
         border = BorderStroke(
             width = 4.dp,
-            color = blue10
+            color = MaterialTheme.colorScheme.tertiary
         ),
         shape = RoundedCornerShape(30),
         modifier = Modifier
@@ -64,8 +60,7 @@ fun Buttons(text: String, onClick: () -> Unit, widthFactor: Float) {
         Text(
             text = text,
             //fontSize = 28.sp,
-            fontSize= MaterialTheme.typography.titleLarge.fontSize,
-            color = white
+            fontSize= MaterialTheme.typography.titleLarge.fontSize
         )
     }
 }
@@ -77,6 +72,7 @@ fun Keyboard() {
             .fillMaxHeight(),
         verticalArrangement = Arrangement.Bottom
     ) {
+
         Row{
             Spacer(modifier = Modifier.padding(start = 8.dp))
 
@@ -104,8 +100,13 @@ fun Keyboard() {
             Buttons(
                 text = "C",
                 onClick = {
-                    equacion = equacion.dropLast(1)
-                    problema = problema.dropLast(1)
+                    if (equacion != "Error") {
+                        equacion = equacion.dropLast(1)
+                        problema = problema.dropLast(1)
+                    }else {
+                        equacion = ""
+                        problema = ""
+                    }
                 },
                 widthFactor = 1f
             )
@@ -122,6 +123,7 @@ fun Keyboard() {
             Spacer(modifier = Modifier.padding(end = 8.dp))
         }
         Spacer(modifier = Modifier.padding(bottom = 8.dp))
+
         Row{
             Spacer(modifier = Modifier.padding(start = 8.dp))
 
@@ -166,6 +168,7 @@ fun Keyboard() {
             Spacer(modifier = Modifier.padding(end = 8.dp))
         }
         Spacer(modifier = Modifier.padding(bottom = 8.dp))
+
         Row{
             Spacer(modifier = Modifier.padding(start = 8.dp))
 
@@ -211,6 +214,7 @@ fun Keyboard() {
             Spacer(modifier = Modifier.padding(end = 8.dp))
         }
         Spacer(modifier = Modifier.padding(bottom = 8.dp))
+
         Row{
             Spacer(modifier = Modifier.padding(start = 8.dp))
 
@@ -255,6 +259,7 @@ fun Keyboard() {
             Spacer(modifier = Modifier.padding(end = 8.dp))
         }
         Spacer(modifier = Modifier.padding(bottom = 8.dp))
+
         Row{
             Spacer(modifier = Modifier.padding(start = 8.dp))
 
@@ -310,18 +315,28 @@ fun Screen() {
     Column(
         Modifier
             .fillMaxWidth()
-            .padding(vertical = 30.dp, horizontal = 10.dp),
+            .padding(
+                vertical = 30.dp,
+                horizontal = 10.dp
+            ),
         horizontalAlignment = Alignment.End
     ) {
         Text(
             text = equacion,
-            color = white,
-            fontSize = 35.sp
+            fontSize = 35.sp,
+            color =
+            if (equacion == "Error")
+                MaterialTheme.colorScheme.error
+            else
+                MaterialTheme.colorScheme.primary
         )
-        Spacer(modifier = Modifier.padding(bottom = 8.dp))
         Text(
             text = "= ${if (result % 1 == 0.0) result.toInt() else result}",
-            color = Color.LightGray,
+            color =
+            if (equacion == "Error")
+                MaterialTheme.colorScheme.error
+            else
+                MaterialTheme.colorScheme.primary,
             fontSize = 35.sp
         )
     }
@@ -330,7 +345,7 @@ fun Screen() {
 @Composable
 fun MainPage() {
     Scaffold(
-        containerColor = black10
+        containerColor = MaterialTheme.colorScheme.surface,
     ) {innerPadding ->
         Column(
             modifier = Modifier
@@ -339,5 +354,17 @@ fun MainPage() {
             Screen()
             Keyboard()
         }
+    }
+}
+
+@Preview(showBackground = true, showSystemUi = true,
+    device = "spec:width=1080px,height=2340px,dpi=440"
+)
+@Composable
+fun GreetingPreview() {
+    NewCalculetorTheme (
+        darkTheme = false
+    ) {
+        MainPage()
     }
 }
