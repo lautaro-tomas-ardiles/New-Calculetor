@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
@@ -18,11 +19,17 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableDoubleStateOf
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -31,10 +38,16 @@ import com.example.newcalculetor.ui.theme.NewCalculetorTheme
 
 var equacion by mutableStateOf("")
 var problema = ""
-var result by mutableDoubleStateOf(0.0)
+var result by mutableFloatStateOf(0.0f)
 
 @Composable
-fun Buttons(text: String, onClick: () -> Unit, widthFactor: Float) {
+fun Buttons(
+    text: String,
+    onClick: () -> Unit,
+    widthFactor: Float,
+    borderColor: Color = MaterialTheme.colorScheme.tertiary,
+    subBorderColor: Color = Color.Transparent
+) {
 
     val screenWidth = LocalConfiguration.current.screenWidthDp.dp
     val screenHeight = LocalConfiguration.current.screenHeightDp.dp
@@ -50,16 +63,24 @@ fun Buttons(text: String, onClick: () -> Unit, widthFactor: Float) {
         onClick = { onClick() },
         border = BorderStroke(
             width = 4.dp,
-            color = MaterialTheme.colorScheme.tertiary
+            color = borderColor
         ),
         shape = RoundedCornerShape(30),
         modifier = Modifier
             .width(buttonWidth)
             .height(buttonHeight)
+            .drawBehind {
+                drawLine(
+                    color = subBorderColor,
+                    start = Offset(20f, size.height - 20),
+                    end = Offset(size.width - 20, size.height - 20),
+                    strokeWidth = 10f
+                )
+            }
+
     ) {
         Text(
             text = text,
-            //fontSize = 28.sp,
             fontSize= MaterialTheme.typography.titleLarge.fontSize
         )
     }
@@ -72,6 +93,34 @@ fun Keyboard() {
             .fillMaxHeight(),
         verticalArrangement = Arrangement.Bottom
     ) {
+        Row{
+            Spacer(modifier = Modifier.padding(start = 8.dp))
+
+            Buttons(
+                text = "√",
+                onClick = {
+                    equacion += " √"
+                    problema += "√"
+                },
+                widthFactor = 1f,
+                borderColor = Color.Transparent,
+                subBorderColor = MaterialTheme.colorScheme.tertiary
+            )
+            Spacer(modifier = Modifier.padding(start = 8.dp))
+
+            Buttons(
+                text = "^",
+                onClick = {
+                    equacion += " ^ "
+                    problema += "^"
+                },
+                widthFactor = 1f,
+                borderColor = Color.Transparent,
+                subBorderColor = MaterialTheme.colorScheme.tertiary
+            )
+            Spacer(modifier = Modifier.padding(start = 8.dp))
+        }
+        Spacer(modifier = Modifier.padding(bottom = 8.dp))
 
         Row{
             Spacer(modifier = Modifier.padding(start = 8.dp))
@@ -81,7 +130,7 @@ fun Keyboard() {
                 onClick = {
                     equacion = ""
                     problema = ""
-                    result = 0.0
+                    result = 0.0f
                 },
                 widthFactor = 1f
             )
@@ -100,12 +149,19 @@ fun Keyboard() {
             Buttons(
                 text = "C",
                 onClick = {
-                    if (equacion != "Error") {
-                        equacion = equacion.dropLast(1)
-                        problema = problema.dropLast(1)
-                    }else {
+                    if (equacion == "Error") {
                         equacion = ""
                         problema = ""
+                        result = 0.0f
+                    }else if (equacion.length >= 3 && equacion[equacion.length - 2] in listOf('+','-','÷','×','√','^')) {
+                        equacion = equacion.dropLast(3)
+                        problema = problema.dropLast(1)
+                    }else if (equacion[equacion.length - 2] == 'n') {
+                        equacion = equacion.dropLast(3)
+                        problema = problema.replace(result.toString(), "")
+                    }else{
+                        equacion = equacion.dropLast(1)
+                        problema = problema.dropLast(1)
                     }
                 },
                 widthFactor = 1f
@@ -292,14 +348,16 @@ fun Keyboard() {
                             problema.contains('/') ||
                             problema.contains('*') ||
                             problema.contains('+') ||
-                            problema.contains('-')
+                            problema.contains('-') ||
+                            problema.contains('√') ||
+                            problema.contains('^')
                         ) {
                             result = calculate(problema)
                             problema = ""
                         }
                     }catch (e: Exception){
                         equacion = "Error"
-                        result = 0.0
+                        result = 0.0f
                     }
                 },
                 widthFactor = 2f
@@ -328,10 +386,22 @@ fun Screen() {
             if (equacion == "Error")
                 MaterialTheme.colorScheme.error
             else
-                MaterialTheme.colorScheme.primary
+                MaterialTheme.colorScheme.primary,
+            style = TextStyle(
+                lineHeight = 45.sp
+            ),
+            overflow = TextOverflow.Clip
         )
         Text(
-            text = "= ${if (result % 1 == 0.0) result.toInt() else result}",
+            text = "= ${
+                if (result % 1 == 0.0f && result < 2147483647) {
+                    result.toInt()
+                }else if (result.toString().contains('E')) {
+                    result.toString().replace("E", "x10^")
+                }else {
+                    result
+                }
+            }",
             color =
             if (equacion == "Error")
                 MaterialTheme.colorScheme.error
