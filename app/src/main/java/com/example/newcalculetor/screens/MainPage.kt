@@ -11,17 +11,12 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableDoubleStateOf
-import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
@@ -30,15 +25,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.newcalculetor.calculator.calculate
-import com.example.newcalculetor.ui.theme.NewCalculetorTheme
-
-var equacion by mutableStateOf("")
-var problema = ""
-var result by mutableFloatStateOf(0.0f)
+import com.example.newcalculetor.calculator.CalculateViewModel
 
 @Composable
 fun Buttons(
@@ -48,7 +37,6 @@ fun Buttons(
     borderColor: Color = MaterialTheme.colorScheme.tertiary,
     subBorderColor: Color = Color.Transparent
 ) {
-
     val screenWidth = LocalConfiguration.current.screenWidthDp.dp
     val screenHeight = LocalConfiguration.current.screenHeightDp.dp
 
@@ -81,295 +69,82 @@ fun Buttons(
     ) {
         Text(
             text = text,
-            fontSize= MaterialTheme.typography.titleLarge.fontSize
+            fontSize = MaterialTheme.typography.titleLarge.fontSize
         )
     }
 }
 
 @Composable
-fun Keyboard() {
+fun Keyboard(viewModel: CalculateViewModel) {
+    val buttonRows = listOf(
+        listOf("√", "^"),
+        listOf("AC", "ans", "C", "÷"),
+        listOf("1", "2", "3", "×"),
+        listOf("4", "5", "6", "-"),
+        listOf("7", "8", "9", "+"),
+        listOf(".", "0", "=")
+    )
+
     Column(
         modifier = Modifier
             .fillMaxHeight(),
         verticalArrangement = Arrangement.Bottom
     ) {
-        Row{
-            Spacer(modifier = Modifier.padding(start = 8.dp))
-
-            Buttons(
-                text = "√",
-                onClick = {
-                    equacion += " √"
-                    problema += "√"
-                },
-                widthFactor = 1f,
-                borderColor = Color.Transparent,
-                subBorderColor = MaterialTheme.colorScheme.tertiary
-            )
-            Spacer(modifier = Modifier.padding(start = 8.dp))
-
-            Buttons(
-                text = "^",
-                onClick = {
-                    equacion += " ^ "
-                    problema += "^"
-                },
-                widthFactor = 1f,
-                borderColor = Color.Transparent,
-                subBorderColor = MaterialTheme.colorScheme.tertiary
-            )
-            Spacer(modifier = Modifier.padding(start = 8.dp))
+        buttonRows.forEach { row ->
+            Row(
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                row.forEach { text ->
+                    Spacer(Modifier.padding(start = 8.dp))
+                    Buttons(
+                        text = text,
+                        onClick = {
+                            when (text) {
+                                "AC" -> viewModel.deleteAll()
+                                "C" -> viewModel.deleteLast()
+                                "=" -> viewModel.calculate()
+                                else -> {
+                                    viewModel.appendToEquation(
+                                        text.replace("÷"," ÷ ")
+                                            .replace("×", " × ")
+                                            .replace("-", " - ")
+                                            .replace("+", " + ")
+                                            .replace("^"," ^ ")
+                                    )
+                                    viewModel.appendToEquationCalculate(
+                                        text
+                                            .replace("×", "*")
+                                            .replace("÷", "/")
+                                            .replace("ans","${viewModel.result}")
+                                    )
+                                }
+                            }
+                        },
+                        widthFactor = if (text == "=") 2f else 1f,
+                        borderColor = (
+                                if (text == "√" || text == "^") {
+                                    Color.Transparent
+                                }else {
+                                    MaterialTheme.colorScheme.tertiary
+                                }
+                        ),
+                        subBorderColor = (
+                                if (text == "√" || text == "^") {
+                                    MaterialTheme.colorScheme.tertiary
+                                }else {
+                                    Color.Transparent
+                                }
+                        )
+                    )
+                }
+            }
+            Spacer(modifier = Modifier.height(8.dp))
         }
-        Spacer(modifier = Modifier.padding(bottom = 8.dp))
-
-        Row{
-            Spacer(modifier = Modifier.padding(start = 8.dp))
-
-            Buttons(
-                text = "AC",
-                onClick = {
-                    equacion = ""
-                    problema = ""
-                    result = 0.0f
-                },
-                widthFactor = 1f
-            )
-            Spacer(modifier = Modifier.padding(start = 8.dp))
-
-            Buttons(
-                text = "ans",
-                onClick = {
-                    equacion += "ans"
-                    problema += "$result"
-                },
-                widthFactor = 1f
-            )
-            Spacer(modifier = Modifier.padding(start = 8.dp))
-
-            Buttons(
-                text = "C",
-                onClick = {
-                    if (equacion == "Error") {
-                        equacion = ""
-                        problema = ""
-                        result = 0.0f
-                    }else if (equacion.length >= 3 && equacion[equacion.length - 2] in listOf('+','-','÷','×','√','^')) {
-                        equacion = equacion.dropLast(3)
-                        problema = problema.dropLast(1)
-                    }else if (equacion[equacion.length - 2] == 'n') {
-                        equacion = equacion.dropLast(3)
-                        problema = problema.replace(result.toString(), "")
-                    }else{
-                        equacion = equacion.dropLast(1)
-                        problema = problema.dropLast(1)
-                    }
-                },
-                widthFactor = 1f
-            )
-            Spacer(modifier = Modifier.padding(start = 8.dp))
-
-            Buttons(
-                text = "÷",
-                onClick = {
-                    equacion += " ÷ "
-                    problema += "/"
-                },
-                widthFactor = 1f
-            )
-            Spacer(modifier = Modifier.padding(end = 8.dp))
-        }
-        Spacer(modifier = Modifier.padding(bottom = 8.dp))
-
-        Row{
-            Spacer(modifier = Modifier.padding(start = 8.dp))
-
-            Buttons(
-                text = "1",
-                onClick = {
-                    equacion += "1"
-                    problema += "1"
-                },
-                widthFactor = 1f
-            )
-            Spacer(modifier = Modifier.padding(start = 8.dp))
-
-            Buttons(
-                text = "2",
-                onClick = {
-                    equacion += "2"
-                    problema += "2"
-                },
-                widthFactor = 1f
-            )
-            Spacer(modifier = Modifier.padding(start = 8.dp))
-
-            Buttons(
-                text = "3",
-                onClick = {
-                    equacion += "3"
-                    problema += "3"
-                },
-                widthFactor = 1f
-            )
-            Spacer(modifier = Modifier.padding(start = 8.dp))
-
-            Buttons(
-                text = "×",
-                onClick = {
-                    equacion += " × "
-                    problema += "*"
-                },
-                widthFactor = 1f
-            )
-            Spacer(modifier = Modifier.padding(end = 8.dp))
-        }
-        Spacer(modifier = Modifier.padding(bottom = 8.dp))
-
-        Row{
-            Spacer(modifier = Modifier.padding(start = 8.dp))
-
-            Buttons(
-                text = "4",
-                onClick = {
-                    equacion += "4"
-                    problema += "4"
-                },
-                widthFactor = 1f
-            )
-            Spacer(modifier = Modifier.padding(start = 8.dp))
-
-            Buttons(
-                text = "5",
-                onClick = {
-                    equacion += "5"
-                    problema += "5"
-                },
-                widthFactor = 1f
-            )
-            Spacer(modifier = Modifier.padding(start = 8.dp))
-
-            Buttons(
-                text = "6",
-                onClick = {
-                    equacion += "6"
-                    problema += "6"
-                },
-                widthFactor = 1f
-            )
-            Spacer(modifier = Modifier.padding(start = 8.dp))
-
-            Buttons(
-                text = "-",
-                onClick = {
-                    equacion += " - "
-                    problema += "-"
-                },
-                widthFactor = 1f
-            )
-
-            Spacer(modifier = Modifier.padding(end = 8.dp))
-        }
-        Spacer(modifier = Modifier.padding(bottom = 8.dp))
-
-        Row{
-            Spacer(modifier = Modifier.padding(start = 8.dp))
-
-            Buttons(
-                text = "7",
-                onClick = {
-                    equacion += "7"
-                    problema += "7"
-                    },
-                widthFactor = 1f
-            )
-            Spacer(modifier = Modifier.padding(start = 8.dp))
-
-            Buttons(
-                text = "8",
-                onClick = {
-                    equacion += "8"
-                    problema += "8"
-                    },
-                widthFactor = 1f
-            )
-            Spacer(modifier = Modifier.padding(start = 8.dp))
-
-            Buttons(
-                text = "9",
-                onClick = {
-                    equacion += "9"
-                    problema += "9"
-                    },
-                widthFactor = 1f
-            )
-            Spacer(modifier = Modifier.padding(start = 8.dp))
-
-            Buttons(
-                text = "+",
-                onClick = {
-                    equacion += " + "
-                    problema += "+"
-                    },
-                widthFactor = 1f
-            )
-            Spacer(modifier = Modifier.padding(end = 8.dp))
-        }
-        Spacer(modifier = Modifier.padding(bottom = 8.dp))
-
-        Row{
-            Spacer(modifier = Modifier.padding(start = 8.dp))
-
-            Buttons(
-                text = ".",
-                onClick = {
-                    equacion += "."
-                    problema += "."
-                    },
-                widthFactor = 1f
-            )
-            Spacer(modifier = Modifier.padding(start = 8.dp))
-
-            Buttons(
-                text = "0",
-                onClick = {
-                    equacion += "0"
-                    problema += "0"
-                    },
-                widthFactor = 1f
-            )
-            Spacer(modifier = Modifier.padding(start = 8.dp))
-
-            Buttons(
-                text = "=",
-                onClick = {
-                    equacion = ""
-                    try {
-                        if (
-                            problema.contains('/') ||
-                            problema.contains('*') ||
-                            problema.contains('+') ||
-                            problema.contains('-') ||
-                            problema.contains('√') ||
-                            problema.contains('^')
-                        ) {
-                            result = calculate(problema)
-                            problema = ""
-                        }
-                    }catch (e: Exception){
-                        equacion = "Error"
-                        result = 0.0f
-                    }
-                },
-                widthFactor = 2f
-            )
-            Spacer(modifier = Modifier.padding(end = 8.dp))
-        }
-        Spacer(modifier = Modifier.padding(bottom = 8.dp))
     }
 }
 
 @Composable
-fun Screen() {
+fun Screen(viewModel: CalculateViewModel) {
     Column(
         Modifier
             .fillMaxWidth()
@@ -380,10 +155,10 @@ fun Screen() {
         horizontalAlignment = Alignment.End
     ) {
         Text(
-            text = equacion,
+            text = viewModel.equacionParaUI,
             fontSize = 35.sp,
             color =
-            if (equacion == "Error")
+            if (viewModel.equacionParaUI == "Error")
                 MaterialTheme.colorScheme.error
             else
                 MaterialTheme.colorScheme.primary,
@@ -394,16 +169,16 @@ fun Screen() {
         )
         Text(
             text = "= ${
-                if (result % 1 == 0.0f && result < 2147483647) {
-                    result.toInt()
-                }else if (result.toString().contains('E')) {
-                    result.toString().replace("E", "x10^")
-                }else {
-                    result
+                if (viewModel.result % 1 == 0.0f && viewModel.result < 2147483647) {
+                    viewModel.result.toInt()
+                } else if (viewModel.result.toString().contains('E')) {
+                    viewModel.result.toString().replace("E", "x10^")
+                } else {
+                    viewModel.result
                 }
             }",
             color =
-            if (equacion == "Error")
+            if (viewModel.equacionParaUI == "Error")
                 MaterialTheme.colorScheme.error
             else
                 MaterialTheme.colorScheme.primary,
@@ -414,27 +189,17 @@ fun Screen() {
 
 @Composable
 fun MainPage() {
+    val viewModel = remember { CalculateViewModel() }
+
     Scaffold(
         containerColor = MaterialTheme.colorScheme.surface,
-    ) {innerPadding ->
+    ) { innerPadding ->
         Column(
             modifier = Modifier
                 .padding(innerPadding)
         ) {
-            Screen()
-            Keyboard()
+            Screen(viewModel)
+            Keyboard(viewModel)
         }
-    }
-}
-
-@Preview(showBackground = true, showSystemUi = true,
-    device = "spec:width=1080px,height=2340px,dpi=440"
-)
-@Composable
-fun GreetingPreview() {
-    NewCalculetorTheme (
-        darkTheme = false
-    ) {
-        MainPage()
     }
 }
