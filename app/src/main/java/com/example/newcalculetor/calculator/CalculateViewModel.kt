@@ -23,6 +23,7 @@ class CalculateViewModel: ViewModel() {
     fun deleteAll(){
         equacionParaUI = ""
         equacionParaCalcular = ""
+        result = 0.0f
     }
 
     fun deleteLast() {
