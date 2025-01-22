@@ -13,11 +13,23 @@ class CalculateViewModel: ViewModel() {
     var result by mutableFloatStateOf(0.0f)
 
     fun appendToEquation(value: String) {
-        equacionParaUI += value
+        equacionParaUI += when (value) {
+            "÷" -> " ÷ "
+            "×" -> " × "
+            "-" -> " - "
+            "+" -> " + "
+            "^" -> " ^ "
+            else -> value
+        }
     }
 
     fun appendToEquationCalculate(value: String) {
-        equacionParaCalcular += value
+        equacionParaCalcular += when (value) {
+            "×" -> "*"
+            "÷" -> "/"
+            "ans" -> "${this.result}"
+            else -> value
+        }
     }
 
     fun deleteAll(){
@@ -62,7 +74,7 @@ class CalculateViewModel: ViewModel() {
 
     fun calculate(){
         try {
-            result = calculate(equacionParaCalcular)
+            result = Calculator().calculate(equacionParaCalcular)
             equacionParaCalcular = ""
             equacionParaUI = ""
         } catch (e: Exception) {

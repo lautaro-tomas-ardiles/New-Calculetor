@@ -104,37 +104,24 @@ fun Keyboard(viewModel: CalculateViewModel) {
                                 "C" -> viewModel.deleteLast()
                                 "=" -> viewModel.calculate()
                                 else -> {
-                                    viewModel.appendToEquation(
-                                        text.replace("÷"," ÷ ")
-                                            .replace("×", " × ")
-                                            .replace("-", " - ")
-                                            .replace("+", " + ")
-                                            .replace("^"," ^ ")
-                                    )
-                                    viewModel.appendToEquationCalculate(
-                                        text
-                                            .replace("×", "*")
-                                            .replace("÷", "/")
-                                            .replace("ans","${viewModel.result}")
-                                    )
+                                    viewModel.appendToEquation(text)
+                                    viewModel.appendToEquationCalculate(text)
                                 }
                             }
                         },
                         widthFactor = if (text == "=") 2f else 1f,
                         borderColor = (
-                                if (text == "√" || text == "^") {
+                                if (text == "√" || text == "^")
                                     Color.Transparent
-                                }else {
+                                else
                                     MaterialTheme.colorScheme.tertiary
-                                }
-                        ),
+                            ),
                         subBorderColor = (
-                                if (text == "√" || text == "^") {
+                                if (text == "√" || text == "^")
                                     MaterialTheme.colorScheme.tertiary
-                                }else {
+                                else
                                     Color.Transparent
-                                }
-                        )
+                            )
                     )
                 }
             }
@@ -157,31 +144,37 @@ fun Screen(viewModel: CalculateViewModel) {
         Text(
             text = viewModel.equacionParaUI,
             fontSize = 35.sp,
-            color =
-            if (viewModel.equacionParaUI == "Error")
-                MaterialTheme.colorScheme.error
-            else
-                MaterialTheme.colorScheme.primary,
-            style = TextStyle(
-                lineHeight = 45.sp
-            ),
+            color =(
+                    if (viewModel.equacionParaUI == "Error")
+                        MaterialTheme.colorScheme.error
+                    else
+                        MaterialTheme.colorScheme.primary
+                    ),
+            style = TextStyle(lineHeight = 45.sp),
             overflow = TextOverflow.Clip
         )
         Text(
             text = "= ${
-                if (viewModel.result % 1 == 0.0f && viewModel.result < 2147483647) {
+                if (viewModel.result % 1 == 0.0f && viewModel.result < Int.MAX_VALUE) {
+
                     viewModel.result.toInt()
+                    
                 } else if (viewModel.result.toString().contains('E')) {
+
                     viewModel.result.toString().replace("E", "x10^")
+                    
                 } else {
+                    
                     viewModel.result
+                    
                 }
             }",
-            color =
-            if (viewModel.equacionParaUI == "Error")
-                MaterialTheme.colorScheme.error
-            else
-                MaterialTheme.colorScheme.primary,
+            color = (
+                    if (viewModel.equacionParaUI == "Error")
+                        MaterialTheme.colorScheme.error
+                    else
+                        MaterialTheme.colorScheme.primary
+                    ),
             fontSize = 35.sp
         )
     }
