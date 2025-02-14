@@ -3,7 +3,7 @@ package com.example.newcalculetor.calculator
 import kotlin.math.pow
 import kotlin.math.sqrt
 
-class Calculator() {
+class Calculator {
     private val listNumbers = mutableListOf<Float>()
     private val listOperators = mutableListOf<Char>()
 
@@ -33,12 +33,11 @@ class Calculator() {
         if (num.isNotEmpty()) listNumbers.add( num.toFloat() )
     }
 
-    fun calculate(equation: String) : Float {
+    fun calculate(equation: String): Float {
         conversionDeString(equation)
+
         var index = 0
-
         while (index < listOperators.size) {
-
             when (listOperators[index]) {
                 '√' -> {
                     if (listNumbers.size > listOperators.size) {
@@ -67,26 +66,34 @@ class Calculator() {
                     }
                 }
 
-                '*' -> {
-                    if (index + 1 < listNumbers.size) {
-                        val result = listNumbers[index] * listNumbers[index + 1]
+                else -> index++ // Para operadores no reconocidos
+            }
+        }
 
-                        listNumbers[index] = result
-                        listNumbers.removeAt(index + 1)
-                        listOperators.removeAt(index)
+        var index2 = 0
+        while (index2 < listOperators.size) {
+            when (listOperators[index2]) {
+
+                '*' -> {
+                    if (index2 + 1 < listNumbers.size) {
+                        val result = listNumbers[index2] * listNumbers[index2 + 1]
+
+                        listNumbers[index2] = result
+                        listNumbers.removeAt(index2 + 1)
+                        listOperators.removeAt(index2)
                     } else {
                         throw IndexOutOfBoundsException("No hay suficientes números para la multiplicación.")
                     }
                 }
 
                 '/' -> {
-                    if (index + 1 < listNumbers.size) {
+                    if (index2 + 1 < listNumbers.size) {
                         try {
-                            val result = listNumbers[index] / listNumbers[index + 1]
+                            val result = listNumbers[index2] / listNumbers[index2 + 1]
 
-                            listNumbers[index] = result
-                            listNumbers.removeAt(index + 1)
-                            listOperators.removeAt(index)
+                            listNumbers[index2] = result
+                            listNumbers.removeAt(index2 + 1)
+                            listOperators.removeAt(index2)
                         } catch (e: ArithmeticException) {
                             println(e.message)
                         }
@@ -95,6 +102,13 @@ class Calculator() {
                     }
                 }
 
+                else -> index2++ // Para operadores no reconocidos
+            }
+        }
+
+        var index3 = 0
+        while (index3 < listOperators.size) {
+            when (listOperators[index3]) {
                 '+' -> {
                     if (index + 1 < listNumbers.size) {
                         val result = listNumbers[index] + listNumbers[index + 1]
@@ -119,9 +133,10 @@ class Calculator() {
                     }
                 }
 
-                else -> index++ // Para operadores no reconocidos
+                else -> index3++ // Para operadores no reconocidos
             }
         }
+
         return listNumbers.firstOrNull() ?: throw IllegalStateException("Error en la expresión.")
     }
 }
